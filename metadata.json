@@ -1,0 +1,14 @@
+{
+  "uuid": "flatnuke@user.local",
+  "name": "Flatpak Uninstall",
+  "description": "Adds an 'Uninstall' entry to the right-click context menu of Flatpak applications in the app grid.",
+  "shell-version": [
+    "45",
+    "46",
+    "47",
+    "48",
+    "49"
+  ],
+  "url": "",
+  "version": 1
+}
