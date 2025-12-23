@@ -1,7 +1,8 @@
 {
-  "uuid": "flatnuke@user.local",
-  "name": "Flatpak Uninstall",
-  "description": "Adds an 'Uninstall' entry to the right-click context menu of Flatpak applications in the app grid.",
+  "uuid": "right-click-uninstall@user.local",
+  "name": "Right-click Uninstall",
+  "settings-schema": "org.gnome.shell.extensions.right-click-uninstall",
+  "description": "Adds an 'Uninstall' entry to the right-click context menu of Flatpak and Appimage applications in the app grid.",
   "shell-version": [
     "45",
     "46",
