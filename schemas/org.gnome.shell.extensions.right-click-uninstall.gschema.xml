@@ -1,1 +1,10 @@
-
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.right-click-uninstall" path="/org/gnome/shell/extensions/right-click-uninstall/">
+    <key name="appimage-path" type="s">
+      <default>'/Appimage/'</default>
+      <summary>Path to AppImages</summary>
+      <description>The directory where AppImage files are stored (relative to Home).</description>
+    </key>
+  </schema>
+</schemalist>
