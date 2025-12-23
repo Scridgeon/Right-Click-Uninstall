@@ -1,4 +1,3 @@
-This extension was created because I wanted a more logical way to uninstall portable applications like Flatpaks and Appimages.
-I used Google Gemini to generate the extension so there is probably a more efficiant way to make this code work, but it works nonetheless.
-
-It was tested on Flatpaks that are Electon and non-Electron based. It also asumes that Appimages are stored in ~/.appimage.
+This extension offers a streamlined way to uninstall Flatpaks and AppImages through right-clicking on the app icon.
+The code was built using Google Gemini and could likely be further refined but works as intended.
+Please note that it has been verified for Electron and non-Electron Flatpaks, and it expects AppImages to be located in the ~/.appimage directory.
