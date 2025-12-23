@@ -14,10 +14,7 @@ export default class FlatpakUninstallExtension extends Extension {
         const extension = this;
 
         PopupMenu.prototype.open = function(animate) {
-            // Call original GNOME open method
             extension._originalOpen.call(this, animate);
-
-            // Access the app object from the menu (discovered in our logs)
             const app = this._app;
             if (!app || this._flatpakHookAdded) return;
 
@@ -27,27 +24,20 @@ export default class FlatpakUninstallExtension extends Extension {
                 const appInfo = app.get_app_info();
                 const filePath = appInfo ? appInfo.get_filename() : '';
                 const commandLine = appInfo ? appInfo.get_commandline() : '';
-
-                // Get the custom path from GSettings
                 const customPath = extension._settings.get_string('appimage-path');
 
-                // Detection Logic
                 const isFlatpak = filePath.includes('/flatpak/') || appId.toLowerCase().includes('flatpak');
-                
-                // Check if the custom path exists in the executable command or the desktop file location
                 const isAppImage = (customPath && customPath.length > 1) && 
                                    (commandLine.includes(customPath) || filePath.includes(customPath));
 
                 if (isFlatpak || isAppImage) {
                     this.addMenuItem(new PopupSeparatorMenuItem());
-
                     let item = new PopupMenuItem('Uninstall');
                     item.label.style = 'color: #ff5555; font-weight: bold;';
                     
                     item.connect('activate', () => {
                         this.close();
                         extension._showConfirmDialog(appName, () => {
-                            // Defer execution to the next idle cycle for stability
                             GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
                                 if (isFlatpak) {
                                     extension._uninstallFlatpak(appId.replace('.desktop', ''), appName);
@@ -58,13 +48,10 @@ export default class FlatpakUninstallExtension extends Extension {
                             });
                         });
                     });
-
                     this.addMenuItem(item);
                     this._flatpakHookAdded = true;
                 }
-            } catch (e) {
-                console.error(`Flatpak/AppImage Uninstall Error: ${e}`);
-            }
+            } catch (e) { }
         };
     }
 
@@ -73,65 +60,68 @@ export default class FlatpakUninstallExtension extends Extension {
         
         dialog.setButtons([
             {
-                label: 'Cancel',
+                label: 'No',
                 action: () => dialog.close(),
                 key: Clutter.KEY_Escape,
-                isDefault: true
+                isDefault: true // Focus stays on 'No' for safety
             },
             {
-                label: 'Delete',
+                label: 'Yes',
                 action: () => {
                     onConfirm();
                     dialog.close();
                 },
                 key: Clutter.KEY_Return,
-                default: false
+                style_class: 'destructive-action' // Keeps the red highlight for the uninstallation action
             }
         ]);
 
-        let label = new St.Label({
-            text: `Delete ${appName}?`,
-            style: 'font-size: 14pt; font-weight: bold; padding: 30px; text-align: center;'
+        let box = new St.BoxLayout({
+            vertical: true,
+            style: 'padding: 30px; spacing: 15px; width: 320px;'
         });
 
-        dialog.contentLayout.add_child(label);
+        let title = new St.Label({
+            text: `Uninstall ${appName}?`,
+            style: 'font-weight: bold; font-size: 14pt; text-align: center;'
+        });
+
+        let body = new St.Label({
+            text: "This application's functionality will no longer be available. Are you sure you want to uninstall?",
+            style: 'text-align: center; font-size: 11pt;'
+        });
+        body.clutter_text.line_wrap = true;
+
+        box.add_child(title);
+        box.add_child(body);
+        
+        dialog.contentLayout.add_child(box);
         dialog.open();
     }
 
     _uninstallFlatpak(appId, appName) {
-        Main.notify('Uninstalling...', `Removing Flatpak: ${appName}`);
+        Main.notify('Uninstalling...', `Removing ${appName}`);
         let launcher = new Gio.SubprocessLauncher({ flags: Gio.SubprocessFlags.NONE });
-        try {
-            launcher.spawnv(['flatpak', 'uninstall', '-y', appId]);
-            this._notifyComplete(appName);
-        } catch (e) {
-            Main.notify('Error', `Failed to uninstall ${appName}`);
-        }
+        launcher.spawnv(['flatpak', 'uninstall', '-y', appId]);
+        this._notifyComplete(appName);
     }
 
     _uninstallAppImage(appInfo, appName) {
         try {
             Main.notify('Uninstalling...', `Removing AppImage: ${appName}`);
-            
             const cmd = appInfo.get_commandline(); 
             const match = cmd.match(/"([^"]+)"|([^\s]+)/);
             const appImagePath = match ? (match[1] || match[2]) : null;
 
-            // Delete binary
-            if (appImagePath && (appImagePath.toLowerCase().includes('.appimage') || appImagePath.toLowerCase().includes('.run'))) {
+            if (appImagePath && appImagePath.toLowerCase().includes('.appimage')) {
                 Gio.File.new_for_path(appImagePath).delete_async(GLib.PRIORITY_DEFAULT, null, null);
             }
-            
-            // Delete desktop entry
             const desktopPath = appInfo.get_filename();
             if (desktopPath) {
                 Gio.File.new_for_path(desktopPath).delete_async(GLib.PRIORITY_DEFAULT, null, null);
             }
-            
             this._notifyComplete(appName);
-        } catch (e) {
-            console.error(`AppImage Removal Error: ${e}`);
-        }
+        } catch (e) { }
     }
 
     _notifyComplete(appName) {
@@ -142,9 +132,7 @@ export default class FlatpakUninstallExtension extends Extension {
     }
 
     disable() {
-        if (this._originalOpen) {
-            PopupMenu.prototype.open = this._originalOpen;
-        }
+        if (this._originalOpen) PopupMenu.prototype.open = this._originalOpen;
         this._settings = null;
     }
 }

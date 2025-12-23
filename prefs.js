@@ -13,19 +13,19 @@ export default class FlatnukePreferences extends ExtensionPreferences {
             description: 'Choose the directory where your AppImages are stored.' 
         });
         
-        // Use an ActionRow to display the current path and a button
         const row = new Adw.ActionRow({
             title: 'Path to AppImages',
             subtitle: settings.get_string('appimage-path')
         });
 
+        // 1. Browse Button
         const browseButton = new Gtk.Button({
             icon_name: 'folder-open-symbolic',
+            tooltip_text: 'Browse for folder',
             valign: Gtk.Align.CENTER,
-            margin_start: 10
+            margin_start: 5
         });
 
-        // Setup the FileDialog
         const dialog = new Gtk.FileDialog({
             title: 'Select AppImage Folder',
             initial_folder: Gio.File.new_for_path(GLib.get_home_dir())
@@ -37,18 +37,32 @@ export default class FlatnukePreferences extends ExtensionPreferences {
                     const folder = dialog.select_folder_finish(result);
                     if (folder) {
                         const path = folder.get_path();
-                        // Update the setting
                         settings.set_string('appimage-path', path);
-                        // Update the UI subtitle to show the new path
                         row.set_subtitle(path);
                     }
-                } catch (e) {
-                    console.error(e);
-                }
+                } catch (e) { console.error(e); }
             });
         });
 
+        // 2. Reset Button
+        const resetButton = new Gtk.Button({
+            icon_name: 'edit-clear-all-symbolic', // Or 'view-refresh-symbolic'
+            tooltip_text: 'Reset to default (~/.appimage/)',
+            valign: Gtk.Align.CENTER,
+            margin_start: 5
+        });
+
+        resetButton.connect('clicked', () => {
+            // This pulls the default value from your .gschema.xml
+            settings.reset('appimage-path');
+            // Update the UI subtitle to show the new (default) path
+            row.set_subtitle(settings.get_string('appimage-path'));
+        });
+
+        // Add both buttons to the end of the row
         row.add_suffix(browseButton);
+        row.add_suffix(resetButton);
+        
         group.add(row);
         page.add(group);
         window.add(page);
